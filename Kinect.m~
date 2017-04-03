@@ -1,6 +1,9 @@
 %% _______________________________ Acquire image
 
 img = imread('./Images/1.png');
+%img = imread('./Images/2.jpg');
+%img = imread('./Images/3.jpg');
+%img = imread('./Images/4.png');
 
 %% _______________________________ Thresholding the image on each color plane
 
@@ -20,6 +23,7 @@ imgBinaryB = im2bw(imgB, graythresh(imgB));
 
 % To define objects
 imgBinary = imcomplement(imgBinaryR & imgBinaryG & imgBinaryB);
+
 imshow(imgBinary);
 
 
@@ -27,17 +31,34 @@ imshow(imgBinary);
 
 % Morphologial opening
 se = strel('disk', 7);
-imgClean = imopen(imgBinray, se);
+imgClean = imopen(imgBinary, se);
 
-% Fill holes and
+% Fill holes and clear border
+imgClean = imfill(imgClean, 'holes');
+imgClean = imclearborder(imgClean);
 
+imshow(imgClean);
 
+%% _______________________________ Compute the number of objects in the image
 
+% Segmented gray-level image
+[labels, numLabels] = bwlabel(imgClean);
+disp(['Number of objects detected: ' num2str(numLabels)]);
 
+%% _______________________________ Identify the color of each object
 
+% Auxiliar matrix
+rLabel = zeros(row, col);
+gLabel = zeros(row, col);
+bLabel = zeros(roe, col);
 
+% Get average color vector for each labeled region
+for i = 1 : numLabels
+    rLabel(labels == i) = median(imgR(labels == i));
+    gLabel(labels == i) = median(imgR(labels == i));
+    bLabel(labels == i) = median(imgR(labels == i));
+end
 
-
-
-
-
+imgLabel = cat
+    
+    

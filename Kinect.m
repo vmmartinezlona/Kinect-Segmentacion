@@ -1,8 +1,7 @@
 %% _______________________________ Acquire image
 
-img = imread('./Images/1.png');
 %img = imread('./Images/2.jpg');
-%img = imread('./Images/3.jpg');
+img = imread('./Images/3.jpg');
 %img = imread('./Images/4.png');
 
 %% _______________________________ Thresholding the image on each color plane
@@ -44,3 +43,23 @@ imshow(imgClean);
 % Segmented gray-level image
 [labels, numLabels] = bwlabel(imgClean);
 disp(['Number of objects detected: ' num2str(numLabels)]);
+
+%% _______________________________ Identify the color of each object
+
+% Auxiliar matrix
+rLabel = zeros(row, col);
+gLabel = zeros(row, col);
+bLabel = zeros(row, col);
+
+% Get average color vector for each labeled region
+for i = 1 : numLabels
+    rLabel(labels == i) = median(imgR(labels == i));
+    gLabel(labels == i) = median(imgG(labels == i));
+    bLabel(labels == i) = median(imgB(labels == i));
+end
+
+imgLabel = cat(3 , rLabel , gLabel, bLabel);
+imshow(imgLabel)
+impixelinfo(gcf);
+    
+    
