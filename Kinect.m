@@ -1,6 +1,9 @@
 %% _______________________________ Acquire image
 
 img = imread('./Images/1.png');
+%img = imread('./Images/2.jpg');
+%img = imread('./Images/3.jpg');
+%img = imread('./Images/4.png');
 
 %% _______________________________ Thresholding the image on each color plane
 
@@ -36,11 +39,8 @@ imgClean = imclearborder(imgClean);
 
 imshow(imgClean);
 
+%% _______________________________ Compute the number of objects in the image
 
-
-
-
-
-
-
-
+% Segmented gray-level image
+[labels, numLabels] = bwlabel(imgClean);
+disp(['Number of objects detected: ' num2str(numLabels)]);
