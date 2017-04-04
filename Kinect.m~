@@ -4,6 +4,37 @@ img = imread('./Images/2.jpg');
 %img = imread('./Images/3.jpg');
 %img = imread('./Images/4.png');
 
+%kinect
+% Create the objects for the color and depth sensros
+vidColor = videoinput('kinect', 1);
+vidDepth = videoinput('kinect', 2);
+
+% Get the source propierties for the depth device
+srcDepth = getselectedsource(vidDepth);
+
+%Set the frames per trigger for both devices to 1
+vidColor.FramesPerTigger = 1;
+vidDepth.FramesPerTigger = 1;
+
+%set the trigger repeat for both devices to 10, in order to acquire 11
+%frames from both (the color sensor and the depth sensor)
+vidColor.TriggerRepeat = 10;
+vidDepth.TriggerRepeat = 10;
+
+%COnfigure the camero for manual triggering for both sensors
+triggerconfig([vidColor vidDepth], 'manual');
+
+%Start both video objects
+start([viColor vidDepth]);
+
+%Trigger the devices, then get acquire data
+% Trigger 10 times to get the frames
+for i = 1:11
+    %trigger bith objects
+    trigger([vidColor vidDepth])
+    %get the acquired frames and metadata
+    {imgColor, ts_color, metaDa
+
 %% _______________________________ Thresholding the image on each selColor plane
 
 img = im2double(img);
