@@ -1,0 +1,21 @@
+function [ imgMask ] = untitled( row, col, imgSource )
+
+imgAuxM = zeros(row, col);
+
+for i1 = 1 : row
+    for j1 = 1 : col 
+        if(imgSource(i1, j1) ~= 0)
+            imgAuxM(i1, j1) = 1;
+        else
+            imgAuxM(i1, j1) = 0;
+        end
+    end
+end
+
+imgMask(:, : , 1) = imgAuxM;
+imgMask(:, : , 2) = imgAuxM;
+imgMask(:, : , 3) = imgAuxM;
+
+
+end
+
