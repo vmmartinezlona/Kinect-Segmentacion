@@ -1,41 +1,51 @@
+clc;
+clear all;
+
 %% _______________________________ Acquire image
 
-img = imread('./Images/2.jpg');
-%img = imread('./Images/3.jpg');
+%img = imread('./Images/2.jpg');
+img = imread('./Images/3.jpg');
 %img = imread('./Images/4.png');
 
-%kinect
-% Create the objects for the color and depth sensros
-vidColor = videoinput('kinect', 1);
-vidDepth = videoinput('kinect', 2);
+% %kinect
+% % Create the objects for the color and depth sensros
+% % vidColor = videoinput('kinect', 1);
+% % vidDepth = videoinput('kinect', 2);
+% 
+% % Get the source propierties for the depth device
+% % srcDepth = getselectedsource(vidDepth);
+% 
+% %Set the frames per trigger for both devices to 1
+% % vidColor.FramesPerTigger = 1;
+% % vidDepth.FramesPerTigger = 1;
+% 
+% %set the trigger repeat for both devices to 10, in order to acquire 11
+% %frames from both (the color sensor and the depth sensor)
+% % vidColor.TriggerRepeat = 10;
+% % vidDepth.TriggerRepeat = 10;
+% 
+% %COnfigure the camero for manual triggering for both sensors
+% %triggerconfig([vidColor vidDepth], 'manual');
+% 
+% %Start both video objects
+% %start([viColor vidDepth]);
+% 
+% %Trigger the devices, then get acquire data
+% % Trigger 10 times to get the frames
+% for i = 1:11
+%     %trigger bith objects
+%     trigger([vidColor vidDepth])
+%     %get the acquired frames and metadata
+%     [imgColor, ts_color, metaData_Color] = getdata(vidColor);
+%     [imgDepth, ts_depth, metaData_Depth] = getdata(vidDepth);
+% end
+% 
+% Get the joint locations for the first person in world
+% coordinates using the JointWorldCoordinates property.
+% Since this is the person in position 1, the index uses 1
+% metaData.JointWorldCoordinates(:,:,1)
+% (x y z) in meters
 
-% Get the source propierties for the depth device
-srcDepth = getselectedsource(vidDepth);
-
-%Set the frames per trigger for both devices to 1
-vidColor.FramesPerTigger = 1;
-vidDepth.FramesPerTigger = 1;
-
-%set the trigger repeat for both devices to 10, in order to acquire 11
-%frames from both (the color sensor and the depth sensor)
-vidColor.TriggerRepeat = 10;
-vidDepth.TriggerRepeat = 10;
-
-%COnfigure the camero for manual triggering for both sensors
-triggerconfig([vidColor vidDepth], 'manual');
-
-%Start both video objects
-start([viColor vidDepth]);
-
-%Trigger the devices, then get acquire data
-% Trigger 10 times to get the frames
-for i = 1:11
-    %trigger bith objects
-    trigger([vidColor vidDepth])
-    %get the acquired frames and metadata
-    [imgColor, ts_color, metaData_Color] = getdata(vidColor);
-    [imgDepth, ts_depth, metaData_Depth] = getdata(vidDepth);
-end
 
 %% _______________________________ Thresholding the image on each selColor plane
 
@@ -56,7 +66,7 @@ imgBinaryB = im2bw(imgB, graythresh(imgB));
 % To define objects
 imgBinary = imcomplement(imgBinaryR & imgBinaryG & imgBinaryB);
 
-imshow(imgBinary);
+% imshow(imgBinary);
 
 
 %% _______________________________ Remove imperfection and strange objects
@@ -69,32 +79,52 @@ imgClean = imopen(imgBinary, se);
 imgClean = imfill(imgClean, 'holes');
 imgClean = imclearborder(imgClean);
 
-imshow(imgClean);
-
 %% _______________________________ Compute the number of objects in the image
 
 % Segmented gray-level image
 [labels, numLabels] = bwlabel(imgClean);
 disp(['Number of objects detected: ' num2str(numLabels)]);
 
-%% _______________________________ Identify the selColor of each object
+%% _______________________________ Identify the color of each object
 
 % Auxiliar matrix
 rLabel = zeros(row, col);
 gLabel = zeros(row, col);
 bLabel = zeros(row, col);
 
-% Get average selColor vector for each labeled region
-for i = 1 : numLabels
-    rLabel(labels == i) = median(imgR(labels == i));
-    gLabel(labels == i) = median(imgG(labels == i));
-    bLabel(labels == i) = median(imgB(labels == i));
+% Get average color vector for each labeled region
+% numLabels == numObjects in the scene
+for i1 = 1 : numLabels
+    rLabel(labels == i1) = median(imgR(labels == i1));
+    gLabel(labels == i1) = median(imgG(labels == i1));
+    bLabel(labels == i1) = median(imgB(labels == i1));
 end
 
-% Give the respective selColor to each object
+% Give the respective color to each object
 imgLabel = cat(3 , rLabel , gLabel, bLabel);
-imshow(imgLabel)
+imshow(imgLabel);
+% gcf = current figure handle. 
+% impixelinfo(gcf) == impixel (imgLabel)
 impixelinfo(gcf);
+
+imgAuxM = zeros(row, col);
+for i1 = 1 : row
+    for j1 = 1 : col 
+        if(imgLabel(i1, j1) ~= 0)
+            imgAuxM(i1, j1) = 1;
+        else
+            imgAuxM(i1, j1) = 0;
+        end
+    end
+end
+
+
+imgMask(:, : , 1) = imgAuxM;
+imgMask(:, : , 2) = imgAuxM;
+imgMask(:, : , 3) = imgAuxM;
+
+imgFinal = img.* imgMask;
+imshow(imgFinal);
 
 %% _______________________________ Choose the objects of the desired selColor
 
@@ -111,7 +141,7 @@ imgSelLAB = applycform(selColor, C);
 imgA = imgLAB(: , : , 2);
 imgB = imgLAB(: , : , 3);
 imgSelA = imgSelLAB(1 , 2); % extract a*
-imgSelB = imgSelLAB(1 , 3); % extract a*
+imgSelB = imgSelLAB(1 , 3); % extract b*
 
 % Compute distance from selected selColor
 % Gradient
@@ -121,11 +151,21 @@ imgDist = hypot(imgA - imgSelA , imgB - imgSelB);
 imgMask(imgDist < distThresh) = 1;
 [cLabel, cNum] = bwlabel(imgMask);
 imgSeg = repmat(selColor , [row , col , 1]).*repmat(imgMask , [1 , 1 , 3]);
-imshow(imgSeg);
 
+for i1 = 1 : row
+    for j1 = 1 : col 
+        if(imgSeg(i1, j1) ~= 0)
+            imgAuxM(i1, j1) = 1;
+        else
+            imgAuxM(i1, j1) = 0;
+        end
+    end
+end
 
+imgMask(:, : , 1) = imgAuxM;
+imgMask(:, : , 2) = imgAuxM;
+imgMask(:, : , 3) = imgAuxM;
 
-
-
-
-    
+imgFinal = img.* imgMask;
+imshow(imgFinal);
+   
