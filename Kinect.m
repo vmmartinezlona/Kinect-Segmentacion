@@ -68,9 +68,6 @@ imgBinaryB = im2bw(imgB, graythresh(imgB));
 % To define objects
 imgBinary = imcomplement(imgBinaryR & imgBinaryG & imgBinaryB);
 
-% imshow(imgBinary);
-
-
 %% _______________________________ Remove imperfection and strange objects
 
 % Morphologial opening
@@ -109,23 +106,8 @@ imshow(imgLabel);
 % impixelinfo(gcf) == impixel (imgLabel)
 impixelinfo(gcf);
 
-
-for i1 = 1 : row
-    for j1 = 1 : col 
-        if(imgLabel(i1, j1) ~= 0)
-            imgAuxM(i1, j1) = 1;
-        else
-            imgAuxM(i1, j1) = 0;
-        end
-    end
-end
-
-
-imgMask(:, : , 1) = imgAuxM;
-imgMask(:, : , 2) = imgAuxM;
-imgMask(:, : , 3) = imgAuxM;
-
-imgFinal = img.* imgMask;
+% Segment the objects in the original image with the compute mask
+imgFinal = img.* SegmentationMask(row, col, imgLabel);
 imshow(imgFinal);
 
 %% _______________________________ Choose the objects of the desired selColor
@@ -154,31 +136,30 @@ imgMask(imgDist < distThresh) = 1;
 [cLabel, cNum] = bwlabel(imgMask);
 imgSeg = repmat(selColor , [row , col , 1]).*repmat(imgMask , [1 , 1 , 3]);
 
-for i1 = 1 : row
-    for j1 = 1 : col 
-        if(imgSeg(i1, j1) ~= 0)
-            imgAuxM(i1, j1) = 1;
-        else
-            imgAuxM(i1, j1) = 0;
-        end
-    end
-end
-
-imgMask(:, : , 1) = imgAuxM;
-imgMask(:, : , 2) = imgAuxM;
-imgMask(:, : , 3) = imgAuxM;
-
-imgFinal = img.* imgMask;
+% Segment the objects in the original image with the compute mask
+imgFinal = img.* SegmentationMask(row, col, imgSeg);
 imshow(imgFinal);
-   
-%imgDepthFinal = img.*imgDepth;
-%imshow(imgDepthFinal);
+%improfile;
 
-%imgDepthFinal = median(imgDepthFinal);
+% Compute number of objects of the selColor
 
+% Segmented gray-level image
+[labels, numLabels] = bwlabel(imgMask);
+disp(['Number of objects detected: ' num2str(numLabels)]);
+
+%P = mean(impixel(imgMask), 2);
+
+[xi, yi, P] = impixel(imgFinal)
+
+
+numSelObj = size(P,1)
+
+% Compute the depth with the limits os the Kinect's specifications
 % 0 == 1.0 m ; 255 == 3.0 m
-
 upLim  = 1.0; lowLim = 3.0; 
 
-Depth = (imgDepth(floor(y), floor(x)) / 255) * (upLim - lowLim) + lowLim;
-disp(['De distance between the object and the kinect (in meters) is: ' num2str(Depth)]);
+for i1 = 1 : numSelObj
+    x = xi(i1); y = yi(i1); 
+    depth = imgMask(y, x) / 255 * (upLim - lowLim) + lowLim;
+    disp(['Distance obejct ', num2str(i1), ' = ', num2str(depth)]);     
+end
